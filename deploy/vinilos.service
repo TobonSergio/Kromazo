@@ -1,0 +1,30 @@
+# /etc/systemd/system/vinilos.service — la app (API + frontend) como servicio que se reinicia solo.
+[Unit]
+Description=Vinilos Gestión
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vinilos
+Group=vinilos
+WorkingDirectory=/opt/vinilos/server
+ExecStart=/usr/bin/node dist/src/index.js
+Restart=always
+RestartSec=5
+# La configuración (NODE_ENV=production, COOKIE_SECURE=true, TRUST_PROXY=true…) está en /opt/vinilos/server/.env
+
+# Endurecimiento: el proceso solo puede escribir en data/ (BD, fotos y respaldos).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/vinilos/server/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

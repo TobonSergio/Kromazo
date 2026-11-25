@@ -1,0 +1,24 @@
+{
+  "name": "negocio-camilo",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev -w server",
+    "dev:web": "npm run dev -w web",
+    "build": "npm run build -w web && npm run build -w server",
+    "start": "npm run start -w server",
+    "test": "npm run test -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
+    "create-admin": "npm run create-admin -w server",
+    "db:generate": "npm run db:generate -w server",
+    "backup": "npm run backup -w server",
+    "restore": "npm run restore -w server --"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
+}

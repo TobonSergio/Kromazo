@@ -1,0 +1,3 @@
+# Los scripts y archivos de despliegue se ejecutan en Linux: siempre con finales de línea LF.
+*.sh text eol=lf
+deploy/* text eol=lf

@@ -1,0 +1,17 @@
+# /etc/caddy/Caddyfile — Caddy obtiene y renueva solo el certificado HTTPS (Let's Encrypt).
+# Reemplaza TU-DOMINIO.com por el dominio real (y www si lo usas). El DNS debe apuntar a la IP del VPS.
+
+TU-DOMINIO.com, www.TU-DOMINIO.com {
+	# Hasta 5 fotos de 10 MB por solicitud, con margen.
+	request_body {
+		max_size 60MB
+	}
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+	log {
+		output file /var/log/caddy/vinilos.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

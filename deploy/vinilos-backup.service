@@ -1,0 +1,10 @@
+# /etc/systemd/system/vinilos-backup.service — respaldo + copia fuera del servidor. Lo dispara vinilos-backup.timer.
+[Unit]
+Description=Respaldo de Vinilos Gestión (BD + fotos) y copia fuera del servidor
+
+[Service]
+Type=oneshot
+User=vinilos
+Group=vinilos
+WorkingDirectory=/opt/vinilos/server
+ExecStart=/opt/vinilos/deploy/respaldo.sh
