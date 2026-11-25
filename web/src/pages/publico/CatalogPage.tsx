@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Camera, Package, Sparkles, Store } from 'lucide-react';
+import { Empty } from '../../components/ui';
 import type { CatalogItem } from '../../api/orders';
 import { UNIT_LABEL } from '../../api/orders';
 import { useAuth } from '../../auth';
@@ -18,13 +20,14 @@ export function CatalogPage() {
   return (
     <div className="stack">
       <div className="hero card stack">
-        <h1>Vinilos, calcas y wraps para tu moto</h1>
+        <span className="eyebrow">Vinilos · calcas · wraps</span>
+        <h1>Dale a tu moto el estilo que buscas</h1>
         <p className="muted">Precios de referencia. Para un trabajo a la medida, envíanos fotos de tu moto y te cotizamos.</p>
         <div>
           {user?.role === 'CLIENT' ? (
-            <Link to="/cliente/solicitar" className="button primary">Pedir cotización</Link>
+            <Link to="/cliente/solicitar" className="button primary big" style={{ width: 'auto' }}><Camera size={18} aria-hidden /> Pedir cotización con fotos</Link>
           ) : !user ? (
-            <Link to="/registro" className="button primary">Crear cuenta y pedir cotización</Link>
+            <Link to="/registro" className="button primary big" style={{ width: 'auto' }}><Camera size={18} aria-hidden /> Crear cuenta y cotizar</Link>
           ) : null}
         </div>
       </div>
@@ -35,6 +38,7 @@ export function CatalogPage() {
           <div className="grid">
             {g.items.map((i) => (
               <article key={i.id} className="card stack catalog-item">
+                <span className="tile-icon">{i.kind === 'SERVICIO' ? <Sparkles size={20} aria-hidden /> : <Package size={20} aria-hidden />}</span>
                 <h3>{i.name}</h3>
                 {i.description && <p className="muted small">{i.description}</p>}
                 <p className="price">
@@ -53,7 +57,7 @@ export function CatalogPage() {
           </div>
         </section>
       ))}
-      {data && groups.length === 0 && <p className="muted center">Pronto publicaremos nuestro catálogo.</p>}
+      {data && groups.length === 0 && <Empty icon={Store} title="Pronto publicaremos nuestro catálogo">Mientras tanto, pide una cotización con fotos de tu moto.</Empty>}
     </div>
   );
 }

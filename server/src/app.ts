@@ -38,6 +38,8 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
       directives: {
         // Sin HTTPS (p. ej. en la red local del negocio) forzar https rompería la carga de la app.
         upgradeInsecureRequests: config.COOKIE_SECURE ? [] : null,
+        // blob: = vista previa de las fotos que el cliente elige antes de subirlas (URL.createObjectURL).
+        imgSrc: ["'self'", 'data:', 'blob:'],
       },
     },
   });
@@ -86,7 +88,11 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   if (hasWeb) await app.register(fastifyStatic, { root: webDist, wildcard: false });
 
   app.setNotFoundHandler((req, reply) => {
-    if (!req.url.startsWith('/api') && req.method === 'GET' && hasWeb) {
+    // Un archivo que no existe (p. ej. /assets/index-viejo.js tras un despliegue) es 404, NO la página:
+    // si se respondiera index.html con 200, el navegador lo rechazaría como JS/CSS y quedaría en blanco.
+    const pathname = req.url.split('?')[0]!;
+    const looksLikeFile = pathname.startsWith('/assets/') || /\.[a-z0-9]{2,5}$/i.test(pathname);
+    if (!pathname.startsWith('/api') && req.method === 'GET' && hasWeb && !looksLikeFile) {
       return reply.sendFile('index.html'); // rutas del SPA (React Router)
     }
     return reply.code(404).send({ error: 'NOT_FOUND', message: 'Recurso no encontrado.' });

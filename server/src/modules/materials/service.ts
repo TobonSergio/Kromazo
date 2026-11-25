@@ -8,7 +8,8 @@ export type MaterialTypeValue = (typeof MATERIAL_TYPES)[number];
 
 /** Nombre legible: "3M 2080 Negro mate". */
 export function materialLabel(m: Pick<Material, 'brand' | 'line' | 'color' | 'finish'>): string {
-  const finish = m.finish === 'OTRO' ? '' : m.finish.toLowerCase();
+  // No repetir el acabado si el color ya lo dice ("Fibra de carbono" + CARBONO → sin "carbono" al final).
+  const finish = m.finish === 'OTRO' || m.color.toLowerCase().includes(m.finish.toLowerCase()) ? '' : m.finish.toLowerCase();
   return [m.brand, m.line, m.color, finish].filter(Boolean).join(' ');
 }
 

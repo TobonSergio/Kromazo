@@ -182,6 +182,37 @@ describe('sesión', () => {
   });
 });
 
+describe('frontend compilado', () => {
+  it('rutas del SPA devuelven la página; archivos inexistentes devuelven 404 (no la página)', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vinilos-web-'));
+    fs.writeFileSync(path.join(dir, 'index.html'), '<!doctype html><div id="root"></div>');
+    const web = await setup({ WEB_DIST_PATH: dir });
+    try {
+      const page = await web.app.inject({ method: 'GET', url: '/pedidos/12' });
+      expect(page.statusCode).toBe(200);
+      expect(page.headers['content-type']).toMatch(/text\/html/);
+      for (const url of ['/assets/index-viejo.js', '/assets/estilos.css', '/logo.png']) {
+        expect((await web.app.inject({ method: 'GET', url })).statusCode, url).toBe(404);
+      }
+    } finally {
+      await web.app.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('cabeceras de seguridad', () => {
+  it('la CSP permite las vistas previas blob: de fotos, pero no imágenes de otros dominios', async () => {
+    const res = await ctx.app.inject({ method: 'GET', url: '/api/health' });
+    const csp = String(res.headers['content-security-policy']);
+    expect(csp).toMatch(/img-src 'self' data: blob:/);
+    expect(csp).not.toMatch(/img-src[^;]*https:/);
+  });
+});
+
 describe('CSRF', () => {
   it('rechaza peticiones que modifican datos sin el token CSRF', async () => {
     await seedUser(ctx, 'CLIENT', 'c@test.co');

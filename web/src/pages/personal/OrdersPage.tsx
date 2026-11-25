@@ -49,7 +49,24 @@ export function OrdersPage() {
       </div>
       <input placeholder="Buscar código, cliente, celular o moto" value={q} onChange={(e) => setQ(e.target.value)} />
       <ErrorMsg error={error} />
-      <div className="table-wrap">
+      {/* Celular: tarjetas (estado visible de un vistazo). Computador: tabla. */}
+      <ul className="list only-mobile">
+        {data?.orders.map((o) => (
+          <li key={o.id}>
+            <Link to={`/pedidos/${o.id}`} className="list-row">
+              <strong>{o.code}</strong>
+              <span className={`status s-${o.status.toLowerCase()}`}>{ORDER_STATUS_LABEL[o.status]}</span>
+              {isAdmin && <span className="right">{fmtMoney(o.total ?? 0)}</span>}
+              <span className="small" style={{ flexBasis: '100%' }}>
+                {o.customerName}
+                {o.vehicleDesc && <span className="muted"> · {o.vehicleDesc}</span>}
+              </span>
+            </Link>
+          </li>
+        ))}
+        {data?.orders.length === 0 && <li className="muted center">Sin pedidos.</li>}
+      </ul>
+      <div className="table-wrap only-desktop">
         <table>
           <thead>
             <tr>

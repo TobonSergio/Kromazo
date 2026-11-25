@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Camera, ClipboardList, Inbox } from 'lucide-react';
+import { Empty, PageHeader } from '../../components/ui';
 import type { OrderSummaryClient, QuoteRequest } from '../../api/orders';
 import { ORDER_STATUS_CLIENT, REQUEST_STATUS_LABEL } from '../../api/orders';
 import { useAuth } from '../../auth';
@@ -15,8 +17,8 @@ export function ClientHome() {
 
   return (
     <div className="stack narrow">
-      <h1>Hola, {user!.fullName.split(' ')[0]}</h1>
-      <Link to="/cliente/solicitar" className="button primary big center">Pedir una cotización</Link>
+      <PageHeader title={<>Hola, {user!.fullName.split(' ')[0]}</>} sub="Aquí ves tus cotizaciones y el estado de tus trabajos." />
+      <Link to="/cliente/solicitar" className="button primary big"><Camera size={18} aria-hidden /> Pedir una cotización</Link>
       <ErrorMsg error={orders.error ?? requests.error} />
 
       {toAnswer.length > 0 && (
@@ -30,7 +32,7 @@ export function ClientHome() {
 
       <section className="stack">
         <h2>Mis trabajos</h2>
-        {orders.data?.orders.length === 0 && <p className="muted small">Aún no tienes cotizaciones ni trabajos.</p>}
+        {orders.data?.orders.length === 0 && <Empty icon={ClipboardList} title="Aún no tienes trabajos">Cuando te enviemos una cotización, aparecerá aquí.</Empty>}
         <ul className="list">
           {orders.data?.orders.map((o) => (
             <li key={o.id}>
@@ -46,7 +48,7 @@ export function ClientHome() {
 
       <section className="stack">
         <h2>Mis solicitudes</h2>
-        {requests.data?.requests.length === 0 && <p className="muted small">Envíanos fotos de tu moto y te cotizamos.</p>}
+        {requests.data?.requests.length === 0 && <Empty icon={Inbox} title="Sin solicitudes">Envíanos fotos de tu moto y te cotizamos.</Empty>}
         {pending.length > 0 && <p className="muted small">El local revisa las solicitudes nuevas y te envía la cotización aquí.</p>}
         <ul className="list">
           {requests.data?.requests.map((r) => (

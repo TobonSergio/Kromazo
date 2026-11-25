@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
+import { AuthLayout } from '../components/AuthLayout';
 import { ErrorMsg, Field, errorText } from '../components/Field';
 
 export function RegisterPage() {
@@ -29,10 +30,12 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="card auth-card" onSubmit={onSubmit}>
-        <h1>Crear cuenta</h1>
-        <p className="muted">Consulta tus cotizaciones y el estado de tus trabajos.</p>
+    <AuthLayout>
+      <form className="auth-card" onSubmit={onSubmit}>
+        <div className="stack" style={{ gap: 6 }}>
+          <h1>Crea tu cuenta</h1>
+          <p className="muted">Pide cotizaciones con fotos y sigue tus trabajos desde el celular.</p>
+        </div>
         <Field label="Nombre completo" required autoComplete="name" value={form.fullName} onChange={set('fullName')} />
         <Field label="Correo" type="email" required autoComplete="email" value={form.email} onChange={set('email')} />
         <Field label="Celular (opcional)" type="tel" autoComplete="tel" value={form.phone} onChange={set('phone')} />
@@ -48,11 +51,11 @@ export function RegisterPage() {
         />
         <Field label="Repite la contraseña" type="password" required autoComplete="new-password" value={form.confirm} onChange={set('confirm')} />
         <ErrorMsg error={error} />
-        <button className="primary" disabled={busy}>{busy ? 'Creando…' : 'Crear cuenta'}</button>
-        <p className="muted">
+        <button className="primary big" disabled={busy}>{busy ? 'Creando…' : 'Crear cuenta'}</button>
+        <p className="muted center">
           ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
         </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

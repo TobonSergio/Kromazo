@@ -27,7 +27,10 @@ import { CustomersPage } from './pages/admin/CustomersPage';
 import { CatalogAdminPage } from './pages/admin/CatalogAdminPage';
 import { PurchasesPage } from './pages/admin/PurchasesPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
+import { initTheme } from './components/ui';
 import './styles.css';
+
+initTheme();
 
 const STAFF: Role[] = ['ADMIN', 'EMPLOYEE'];
 

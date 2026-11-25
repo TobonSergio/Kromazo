@@ -79,6 +79,12 @@ describe('materiales y rollos', () => {
     expect(mov.map((x) => [x.type, x.areaMm2])).toEqual([['INITIAL_IN', 15_200_000]]);
   });
 
+  it('el nombre del material no repite el acabado si el color ya lo incluye', async () => {
+    await newMaterial({ sku: 'C1', brand: 'Genérico', line: null, color: 'Fibra de carbono', finish: 'CARBONO' });
+    const labels = (await admin.req('GET', '/api/admin/materials')).json().materials.map((m: { label: string }) => m.label);
+    expect(labels).toContain('Genérico Fibra de carbono');
+  });
+
   it('rechaza un código de rollo repetido', async () => {
     const m = await newMaterial();
     await newRoll(m.id, { code: 'neg-01' });

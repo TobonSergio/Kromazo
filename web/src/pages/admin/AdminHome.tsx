@@ -1,98 +1,140 @@
 import { Link } from 'react-router-dom';
-import type { Material, Unit } from '../../api/inventory';
+import {
+  BarChart3,
+  ClipboardList,
+  Inbox,
+  Layers,
+  Package,
+  Plus,
+  Ruler,
+  Scissors,
+  ShoppingCart,
+  SlidersHorizontal,
+  Store,
+  UserCog,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
+import type { Unit } from '../../api/inventory';
 import type { OrderSummaryStaff, QuoteRequestStaff } from '../../api/orders';
+import { useAuth } from '../../auth';
+import { Alert, PageHeader } from '../../components/ui';
 import { useApi } from '../../components/useApi';
 
+interface StockRow { materialId: number; label: string; daysLeft: number | null; alert: boolean; lowStock: boolean }
+
+const MODULES: { to: string; title: string; text: string; icon: LucideIcon }[] = [
+  { to: '/pedidos', title: 'Pedidos', text: 'Cotizaciones, trabajos en el taller, pagos y factura.', icon: ClipboardList },
+  { to: '/solicitudes', title: 'Solicitudes', text: 'Lo que piden los clientes desde la web, con fotos.', icon: Inbox },
+  { to: '/stock', title: 'Stock', text: 'Rollos y retazos por material, historial y conteos.', icon: Layers },
+  { to: '/admin/clientes', title: 'Clientes', text: 'Con y sin cuenta, datos de facturación.', icon: Users },
+  { to: '/admin/materiales', title: 'Materiales', text: 'Referencias, costos, stock mínimo y alta de rollos.', icon: Package },
+  { to: '/admin/compras', title: 'Compras', text: 'Proveedores y compras: crean rollos y actualizan el costo.', icon: ShoppingCart },
+  { to: '/admin/catalogo', title: 'Catálogo', text: 'Vitrina pública, precios, IVA y vigencia de cotizaciones.', icon: Store },
+  { to: '/admin/reportes', title: 'Reportes', text: 'Qué comprar, ventas, cartera, margen y faltantes.', icon: BarChart3 },
+  { to: '/admin/usuarios', title: 'Usuarios', text: 'Clientes, empleados y administradores.', icon: UserCog },
+  { to: '/admin/ajustes', title: 'Cortes a pulso', text: 'Tallas y tolerancia de la conciliación.', icon: SlidersHorizontal },
+];
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+}
+
 export function AdminHome() {
+  const { user } = useAuth();
   const units = useApi<{ units: Unit[] }>('/api/staff/units?needsCount=true');
-  const materials = useApi<{ materials: Material[] }>('/api/staff/materials');
   const requests = useApi<{ requests: QuoteRequestStaff[] }>('/api/staff/quote-requests?status=NUEVA');
+  const workshop = useApi<{ orders: OrderSummaryStaff[] }>('/api/staff/orders?status=APROBADO,EN_PROCESO');
   const ready = useApi<{ orders: OrderSummaryStaff[] }>('/api/staff/orders?status=TERMINADO');
-  const toCount = units.data?.units.length ?? 0;
+  const stock = useApi<{ materials: StockRow[] }>('/api/admin/reports/stock');
+
+  const toCount = units.data?.units ?? [];
   const newRequests = requests.data?.requests.length ?? 0;
+  const inWorkshop = workshop.data?.orders.length ?? 0;
   const readyCount = ready.data?.orders.length ?? 0;
-  const low = materials.data?.materials.filter((m) => m.lowStock) ?? [];
-  const stock = useApi<{ materials: { materialId: number; label: string; daysLeft: number | null; alert: boolean; lowStock: boolean }[] }>('/api/admin/reports/stock');
+  const low = stock.data?.materials.filter((m) => m.lowStock) ?? [];
   const runningOut = stock.data?.materials.filter((m) => m.alert && !m.lowStock) ?? [];
+  const loaded = !!(requests.data && workshop.data && ready.data);
 
   return (
     <div className="stack">
-      <h1>Panel de administración</h1>
+      <PageHeader
+        eyebrow={new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}
+        title={`${greeting()}, ${user!.fullName.split(' ')[0]}`}
+        sub="Esto es lo que pide atención hoy en el taller."
+        actions={
+          <>
+            <Link to="/pedidos/nuevo" className="button"><Plus size={16} aria-hidden /> Nueva cotización</Link>
+            <Link to="/corte" className="button primary"><Scissors size={16} aria-hidden /> Registrar corte</Link>
+          </>
+        }
+      />
 
-      {(toCount > 0 || low.length > 0 || newRequests > 0 || readyCount > 0 || runningOut.length > 0) && (
-        <div className="card stack">
-          {newRequests > 0 && (
-            <p className="attention-text">
-              <Link to="/solicitudes">{newRequests} {newRequests === 1 ? 'solicitud nueva' : 'solicitudes nuevas'} de cotización</Link> por responder.
-            </p>
+      <div className="grid stats">
+        <Kpi to="/solicitudes" icon={Inbox} label="Solicitudes por responder" value={newRequests} highlight={newRequests > 0} />
+        <Kpi to="/pedidos" icon={ClipboardList} label="Trabajos en el taller" value={inWorkshop} />
+        <Kpi to="/pedidos" icon={Package} label="Listos para entregar" value={readyCount} highlight={readyCount > 0} />
+        <Kpi to="/stock" icon={Ruler} label="Rollos por medir" value={toCount.length} />
+      </div>
+
+      {loaded && (toCount.length > 0 || low.length > 0 || runningOut.length > 0) && (
+        <div className="stack" style={{ gap: 10 }}>
+          {low.length > 0 && (
+            <Alert tone="warn">
+              <strong>Stock bajo el mínimo</strong>
+              <span>{low.map((m) => m.label).join(', ')}. <Link to="/admin/compras">Registrar compra</Link></span>
+            </Alert>
           )}
-          {readyCount > 0 && (
-            <p><Link to="/pedidos">{readyCount} {readyCount === 1 ? 'trabajo terminado' : 'trabajos terminados'}</Link> esperando entrega.</p>
-          )}
-          {toCount > 0 && (
-            <p className="warn">
-              {toCount} {toCount === 1 ? 'rollo necesita' : 'rollos necesitan'} medición (muchos cortes a pulso sin verificar):{' '}
-              {units.data!.units.map((u, i) => (
-                <span key={u.id}>{i > 0 && ', '}<Link to={`/stock/${u.id}`}>{u.code}</Link></span>
-              ))}
-            </p>
-          )}
-          {low.length > 0 && <p className="warn">Stock bajo: {low.map((m) => m.label).join(', ')}.</p>}
           {runningOut.length > 0 && (
-            <p className="warn">
-              Al ritmo actual se acaba pronto:{' '}
-              {runningOut.map((m) => `${m.label} (${m.daysLeft} días)`).join(', ')}. <Link to="/admin/reportes">Ver reporte</Link>
-            </p>
+            <Alert tone="warn">
+              <strong>Se acaba pronto al ritmo actual</strong>
+              <span>
+                {runningOut.map((m) => `${m.label} (${m.daysLeft} días)`).join(', ')}. <Link to="/admin/reportes">Ver reporte</Link>
+              </span>
+            </Alert>
+          )}
+          {toCount.length > 0 && (
+            <Alert tone="info">
+              <strong>Rollos con muchos cortes a pulso sin verificar</strong>
+              <span>
+                Mídelos para conciliar las estimaciones:{' '}
+                {toCount.map((u, i) => (
+                  <span key={u.id}>{i > 0 && ', '}<Link to={`/stock/${u.id}`}>{u.code}</Link></span>
+                ))}
+              </span>
+            </Alert>
           )}
         </div>
       )}
 
-      <div className="grid">
-        <Link to="/corte" className="card tile">
-          <h2>Registrar corte</h2>
-          <p className="muted">Medido o a pulso, con retazos.</p>
-        </Link>
-        <Link to="/stock" className="card tile">
-          <h2>Stock</h2>
-          <p className="muted">Rollos y retazos por material, historial y conteos.</p>
-        </Link>
-        <Link to="/admin/materiales" className="card tile">
-          <h2>Materiales</h2>
-          <p className="muted">Referencias, costos, stock mínimo y alta de rollos.</p>
-        </Link>
-        <Link to="/admin/ajustes" className="card tile">
-          <h2>Cortes a pulso</h2>
-          <p className="muted">Tallas y tolerancia de la conciliación.</p>
-        </Link>
-        <Link to="/admin/usuarios" className="card tile">
-          <h2>Usuarios</h2>
-          <p className="muted">Clientes, empleados y administradores.</p>
-        </Link>
-        <Link to="/pedidos" className="card tile">
-          <h2>Pedidos</h2>
-          <p className="muted">Cotizaciones, trabajos en el taller, pagos y factura.</p>
-        </Link>
-        <Link to="/solicitudes" className="card tile">
-          <h2>Solicitudes</h2>
-          <p className="muted">Lo que piden los clientes desde la web, con fotos.</p>
-        </Link>
-        <Link to="/admin/clientes" className="card tile">
-          <h2>Clientes</h2>
-          <p className="muted">Con y sin cuenta, datos de facturación.</p>
-        </Link>
-        <Link to="/admin/catalogo" className="card tile">
-          <h2>Catálogo</h2>
-          <p className="muted">Vitrina pública, precios, IVA y vigencia de cotizaciones.</p>
-        </Link>
-        <Link to="/admin/compras" className="card tile">
-          <h2>Compras</h2>
-          <p className="muted">Proveedores y compras de rollos (crean el inventario y actualizan el costo).</p>
-        </Link>
-        <Link to="/admin/reportes" className="card tile">
-          <h2>Reportes</h2>
-          <p className="muted">Qué comprar, ventas, cartera, margen, desperdicio y faltantes.</p>
-        </Link>
-      </div>
+      <section className="stack">
+        <h2>Módulos</h2>
+        <div className="grid">
+          {MODULES.map((m) => {
+            const Icon = m.icon;
+            return (
+              <Link key={m.to} to={m.to} className="card tile">
+                <span className="tile-icon"><Icon size={20} aria-hidden /></span>
+                <h3>{m.title}</h3>
+                <p className="muted small">{m.text}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
+  );
+}
+
+function Kpi({ to, icon: Icon, label, value, highlight }: { to: string; icon: LucideIcon; label: string; value: number; highlight?: boolean }) {
+  return (
+    <Link to={to} className={`card stat tile ${highlight ? 'attention' : ''}`}>
+      <span className="row between">
+        <small>{label}</small>
+        <Icon size={18} aria-hidden style={{ color: highlight ? 'var(--accent-ink)' : 'var(--muted)' }} />
+      </span>
+      <strong>{value.toLocaleString('es-CO')}</strong>
+    </Link>
   );
 }

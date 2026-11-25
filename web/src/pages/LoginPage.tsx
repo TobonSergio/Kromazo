@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
+import { AuthLayout } from '../components/AuthLayout';
 import { ErrorMsg, Field, errorText } from '../components/Field';
 
 export function LoginPage() {
@@ -28,9 +29,12 @@ export function LoginPage() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="card auth-card" onSubmit={onSubmit}>
-        <h1>Iniciar sesión</h1>
+    <AuthLayout>
+      <form className="auth-card" onSubmit={onSubmit}>
+        <div className="stack" style={{ gap: 6 }}>
+          <h1>Bienvenido de nuevo</h1>
+          <p className="muted">Entra para ver tus cotizaciones, trabajos y el taller.</p>
+        </div>
         <Field label="Correo" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <Field
           label="Contraseña"
@@ -41,11 +45,13 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <ErrorMsg error={error} />
-        <button className="primary" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
-        <p className="muted">
-          ¿No tienes cuenta? <Link to="/registro">Regístrate</Link> · <Link to="/catalogo">Ver catálogo</Link>
+        <button className="primary big" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
+        <p className="muted center">
+          ¿No tienes cuenta? <Link to="/registro">Regístrate gratis</Link>
+          <br />
+          <Link to="/catalogo">Ver el catálogo sin entrar</Link>
         </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }
